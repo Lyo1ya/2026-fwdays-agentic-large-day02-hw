@@ -1,0 +1,105 @@
+task: Add a regression test that toggles grid mode via action execution and verifies both state update + canvas render invocation.
+
+##Rule enabled
+I’ll add a focused regression test around the grid toggle action path, then verify it asserts both app state change and that canvas rendering is triggered. I’m starting by locating the existing action tests and render invocation patterns to match current conventions.
+
+I found a dedicated actionToggleGridMode action file and action test patterns. Next I’ll mirror the existing action-test style and hook into the render spy used by other regression tests.
+
+I have enough context and will add a new action-level test file for actionToggleGridMode, including a render spy assertion. After that I’ll run just that test file to confirm it passes.
+
+actionToggleGridMode.test.tsx(new)
+import { vi } from "vitest";
+import { Excalidraw } from "../index";
+import * as StaticScene from "../renderer/staticScene";
+import { API } from "../tests/helpers/api";
+import { render } from "../tests/test-utils";
+import { actionToggleGridMode } from "./actionToggleGridMode";
+const { h } = window;
+describe("actionToggleGridMode", () => {
+  it("toggles grid mode and re-renders the static canvas", async () => {
+    const renderStaticScene = vi.spyOn(StaticScene, "renderStaticScene");
+    await render(<Excalidraw />);
+    renderStaticScene.mockClear();
+    expect(h.state.gridModeEnabled).toBe(false);
+    API.executeAction(actionToggleGridMode);
+    expect(h.state.gridModeEnabled).toBe(true);
+    expect(renderStaticScene).toHaveBeenCalledTimes(1);
+    API.executeAction(actionToggleGridMode);
+    expect(h.state.gridModeEnabled).toBe(false);
+    expect(renderStaticScene).toHaveBeenCalledTimes(2);
+  });
+});
+
+
+I added the new regression test file; I couldn’t run the test command because execution was skipped in this environment, so I’m doing a lint/diagnostic pass on the changed file now.
+
+Added a new regression test that executes the grid toggle action and verifies both behaviors you asked for:
+
+state updates (gridModeEnabled toggles false -> true -> false)
+static canvas render invocation (renderStaticScene called on each action execution)
+Updated file:
+
+packages/excalidraw/actions/actionToggleGridMode.test.tsx
+What the test does:
+
+renders <Excalidraw />
+spies on StaticScene.renderStaticScene
+clears initial render calls
+runs API.executeAction(actionToggleGridMode) twice
+asserts state + render calls after each toggle
+I wasn’t able to run the test command in this environment (execution was skipped), but the edited file has no linter diagnostics.
+
+
+##Rule disabled:
+I’ll add a focused regression test around the grid toggle action path, then verify it asserts both the app state change and that canvas rendering is triggered. I’m first locating the existing action tests and render invocation patterns to follow current conventions.
+
+I found the grid action (actionToggleGridMode) and I’m now mirroring existing action test patterns so the new regression test checks both reducer state and render side-effect correctly.
+
+I’m adding a dedicated test file for this regression so it explicitly exercises actionManager.executeAction(actionToggleGridMode) and validates both gridModeEnabled and render call(s), then I’ll run that spec to confirm it passes.
+import React from "react";
+import { vi } from "vitest";
+import { actionToggleGridMode } from "../actions/actionToggleGridMode";
+import { Excalidraw } from "../index";
+import * as StaticScene from "../renderer/staticScene";
+import { API } from "./helpers/api";
+import { render, unmountComponent } from "./test-utils";
+unmountComponent();
+const { h } = window;
+const renderStaticScene = vi.spyOn(StaticScene, "renderStaticScene");
+describe("grid mode action", () => {
+  beforeEach(() => {
+    renderStaticScene.mockClear();
+  });
+  it("toggles grid mode via action execution and invokes canvas render", async () => {
+    await render(<Excalidraw />);
+    renderStaticScene.mockClear();
+    expect(h.state.gridModeEnabled).toBe(false);
+    API.executeAction(actionToggleGridMode);
+    expect(h.state.gridModeEnabled).toBe(true);
+    expect(renderStaticScene).toHaveBeenCalled();
+  });
+});
+Added a new regression test in packages/excalidraw/tests/gridMode.test.tsx that:
+
+renders Excalidraw
+clears the render spy baseline
+executes actionToggleGridMode through action execution (API.executeAction(...), which calls the action manager path)
+verifies state update: h.state.gridModeEnabled flips from false to true
+verifies canvas render invocation: renderStaticScene is called after the action
+I also checked diagnostics for the new file; no linter errors were reported.
+
+
+Comparison: 
+Compared the two A/B outputs against `packages/excalidraw` architecture rule (`.cursor/rules/architecture.mdc`), there **is** a meaningful implementation difference.
+
+- **Rule-enabled result** uses an **action-focused test** (`packages/excalidraw/actions/actionToggleGridMode.test.tsx`) and verifies a full toggle cycle (`false -> true -> false`) plus exact render calls (`1`, then `2`).
+- **Rule-disabled result** (currently present as `packages/excalidraw/tests/gridMode.test.tsx`) is **broader/less strict**: it checks only one toggle (`false -> true`) and only that render was called at least once.
+- **Test quality difference:** enabled variant is a stronger regression test (more deterministic assertions, two-step behavior coverage). Disabled variant can pass even if render call count regresses.
+- **Architecture-rule compliance:** both variants appear compliant with `architecture.mdc`:
+  - state changes happen through action execution path (`API.executeAction(actionToggleGridMode)`), which aligns with action-manager based state flow;
+  - render is validated via canvas pipeline hook (`renderStaticScene`);
+  - no forbidden rendering libs introduced;
+  - no dependency changes.
+- **Implementation hygiene:** enabled version is cleaner (no extra `React` import / no global `unmountComponent()` call), while disabled version includes extra setup that isn’t needed for the core assertion.
+
+Current repo state indicates only the **rule-disabled style file** exists (`packages/excalidraw/tests/gridMode.test.tsx`), so if you want the stronger version, we should replace it with the rule-enabled test approach.

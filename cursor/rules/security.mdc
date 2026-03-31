@@ -1,0 +1,45 @@
+---
+description: Security rules for handling sensitive files, secrets, encryption, and input validation
+alwaysApply: true
+---
+
+# Security Rules
+
+## Credentials and Secrets
+
+- Never commit `.env.local`, `.env.*.local`, private keys, tokens, or real API secrets
+- `.env.development` and `.env.production` are public client config only; do not place private credentials there
+- Do not log or expose `roomKey`, `encryptionKey`, access tokens, or auth headers in logs/errors
+
+## Input Validation
+
+- Treat all external input as untrusted (URL params, clipboard, imported files, network payloads)
+- Validate shape and type before use; fail closed on invalid data
+- Never use `eval`, `new Function`, or dynamic code execution from user-controlled input
+- Avoid raw HTML injection; if unavoidable, sanitize first
+
+## Crypto and Data Protection
+
+- Use existing project crypto utilities; do not introduce custom crypto algorithms
+- Keep encryption/decryption behavior backward compatible unless explicitly approved
+- Zero-trust key handling: never persist encryption keys to local storage or analytics
+
+## Network and Storage
+
+- Do not send sensitive payload data to telemetry/analytics
+- Redact secrets from error reporting and debug output
+- Minimize persisted data and prefer short-lived in-memory values for sensitive fields
+
+## Dependencies and Security Changes
+
+- No new npm packages without explicit approval and security review
+- Security-impacting changes require threat assessment, tests, and manual QA verification
+
+## How to Verify
+
+1. Confirm no secrets or private credentials were added to tracked files, logs, or error messages.
+2. Confirm external inputs are validated before use and unsafe execution paths (`eval`, `new Function`) are absent.
+3. Confirm raw HTML injection is avoided, or sanitization is explicitly applied where needed.
+4. Confirm encryption/key handling uses approved project utilities and keys are not persisted to local storage or telemetry.
+5. Confirm telemetry/error reporting redacts sensitive values and excludes secret-bearing payload data.
+6. Confirm any security-impacting or dependency change includes approval, risk assessment, automated tests, and manual QA.
