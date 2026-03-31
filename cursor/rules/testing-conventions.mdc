@@ -1,0 +1,47 @@
+---
+description: "Testing conventions for Excalidraw tests in packages/"
+globs: "packages/**/*.{test,spec}.{ts,tsx},packages/**/__tests__/**"
+alwaysApply: false
+---
+
+# Excalidraw Testing Conventions
+
+Apply these conventions when writing or modifying tests in `packages/`.
+
+## Test Scope and Style
+
+- Prefer behavior-focused tests over implementation details
+- Keep one clear behavior/assertion theme per test case
+- Use descriptive test names that explain expected behavior
+- Avoid snapshot-heavy tests unless structure stability is the goal
+
+## Determinism and Reliability
+
+- Make tests deterministic: no real network calls, timers, or randomness without control
+- Mock time, randomness, and external APIs explicitly
+- Avoid flaky assertions based on ordering or timing races
+
+## Fixtures and Data
+
+- Keep fixtures minimal and local to the test when possible
+- Reuse shared helpers only when they improve readability
+- Cover invalid, boundary, and success paths for critical logic
+
+## Excalidraw-Specific Guardrails
+
+- Preserve compatibility behaviors for scene/data restore flows
+- Validate action flows through public APIs instead of private internals
+- When changing rendering-related behavior, add regression coverage
+
+## Quality Gate
+
+- New or changed logic should include corresponding test updates
+- Do not merge failing, skipped, or flaky tests without explicit approval
+
+## How to Verify
+
+1. Confirm each test case is behavior-focused, clearly named, and avoids unnecessary implementation coupling.
+2. Confirm tests are deterministic (no uncontrolled network/time/randomness) and external dependencies are mocked.
+3. Confirm coverage includes success, boundary, and invalid-input paths for changed critical logic.
+4. Confirm Excalidraw compatibility-sensitive flows (restore/action/rendering) have regression coverage when touched.
+5. Confirm changed logic includes corresponding test updates and the test suite passes without flaky or skipped tests.

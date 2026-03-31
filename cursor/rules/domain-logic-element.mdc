@@ -1,0 +1,33 @@
+---
+description: "Domain logic rules for Excalidraw element module"
+globs: "packages/element/**"
+alwaysApply: false
+---
+
+# Module: Domain Logic (packages/element)
+
+## Boundaries
+
+- Keep `packages/element` focused on element domain behavior and invariants
+- Avoid UI concerns, rendering side effects, and framework-specific logic in domain utilities
+- Prefer pure functions where possible (deterministic input -> output)
+
+## Data and Types
+
+- Preserve backward compatibility for element data shapes unless explicitly approved
+- Reuse existing shared types/utilities before introducing new abstractions
+- Validate assumptions at module boundaries when consuming external/untrusted data
+
+## Changes and Safety
+
+- Keep changes small and composable; avoid broad refactors without clear need
+- Update or add tests alongside domain logic changes
+- Do not introduce new dependencies without explicit approval
+
+## How to Verify
+
+1. Confirm new/changed code in `packages/element` stays domain-focused and does not leak UI/rendering concerns.
+2. Confirm domain functions are deterministic and avoid hidden side effects where feasible.
+3. Confirm element type/data compatibility is preserved or explicitly documented when changed.
+4. Confirm related tests were added/updated and pass for modified domain behavior.
+5. Confirm no unapproved dependency additions were introduced.
